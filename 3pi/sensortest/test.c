@@ -13,6 +13,7 @@
 // ATmega168 has 16k of program space compared to 1k of RAM, so large
 // pieces of static data should be stored in program space.
 #include <avr/pgmspace.h>
+#include <math.h>
 
 // speed of the robot
 int speed = 100;
@@ -93,14 +94,34 @@ void update_bounds(const unsigned int *s, unsigned int *minv, unsigned int *maxv
 // return line position
 // YOU MUST WRITE THIS.
 int line_position(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
-	return 0;
+  int i;
+  for(i = 0; i < 5; i++){
+    char active_sensor[] = {0, 0, 0, 0, 0};
+    char number_active = 0;
+    //Here we could possibly print a message indicating that there is no line
+    //if that is indeed the case according to the sensors.
+    if(s[i] >= maxv[i] && s[i] > minv[i]){
+      active_sensor[i] = 1;
+      number_active += 1;
+    }
+  }
+  //We may use something like a status variable, denoting whether the previous
+  //sensor was activated.  In that case we can tell that there are contiguous
+  //sensors being activated. (i.e. a thicker line).
+
+  for(i = 0; i < 5; i++){
+    
+  }
+
+  if(number_active == 0)
+    return 0;
 }
 
 // Make a little dance: Turn left and right
 void dance(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
 	int counter;
 	for(counter=0;counter<80;counter++)	{
-	  read_line_sensors(s,IR_EMITTERS_ON);
+	  read_line_sensors(s, IR_EMITTERS_ON);
 	  update_bounds(s, minv, maxv);
 		if(counter < 20 || counter >= 60)
 			set_motors(40,-40);
@@ -164,15 +185,26 @@ int main()
 
 
     // compute line positon
-    position = line_position(sensors,minv,maxv);
+    position = line_position(sensors, minv, maxv);
 
     // display bargraph
     clear();
     print_long(position);
     lcd_goto_xy(0,1);
     // for (i=0; i<8; i++) { print_character(display_characters[i]); }
-    display_bars(sensors,minv,maxv);
+    display_bars(sensors, minv, maxv);
     
     delay_ms(10);
   }
 }
+
+/*
+ASSIGMENT 1
+Some relevant questions here (some may apply later) are: 
+Do we center the robot on the line?
+Are the sensors on the back or the front of the robot?
+Are we telling the robot to center itself on the line at this point?
+To debug this program, it's mostly necessary to have the robot around.  For example, to read the values from the sensors and get a feel for relative measurements.
+*Should the robot be able to measure a white line in a dark setting?
+*Does a partial covering of the sensor affect its measurement?
+*/
