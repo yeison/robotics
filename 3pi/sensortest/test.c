@@ -98,12 +98,17 @@ long line_position(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
   long position;
   long numSum = 0;
   long denSum = 0;
+  long sense[] = {0, 0, 0, 0, 0};
+  
   for(i = 0; i < 5; i+=1){
+    sense[i] = (100*(s[i]-minv[i]))/(maxv[i]-minv[i]);
     //Here we could possibly print a message indicating that there is no line
     //if that is indeed the case according to the sensors.
-    numSum += (s[i]-minv[i])*(i-2)*1000;
-    denSum += (s[i]-minv[i]);
+    numSum += (sense[i])*(i-2)*1000;
+    denSum += (sense[i]);
   }
+
+  //print_long(sense[2]);
 
   position = numSum/denSum;
   //We may use something like a status variable, denoting whether the previous
@@ -190,7 +195,7 @@ int main()
     // for (i=0; i<8; i++) { print_character(display_characters[i]); }
     display_bars(sensors, minv, maxv);
     
-    delay_ms(50);
+    delay_ms(10);
   }
 }
 
