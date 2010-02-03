@@ -101,7 +101,7 @@ long line_position(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
   long sense[] = {0, 0, 0, 0, 0};
   
   for(i = 0; i < 5; i+=1){
-    sense[i] = (100*(s[i]-minv[i]))/(maxv[i]-minv[i]);
+    sense[i] = (100*((s[i]-minv[i])))/(maxv[i]-minv[i]);
     //Here we could possibly print a message indicating that there is no line
     //if that is indeed the case according to the sensors.
     numSum += (sense[i])*(i-2)*1000;
