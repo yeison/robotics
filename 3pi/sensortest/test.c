@@ -198,33 +198,3 @@ int main()
     delay_ms(10);
   }
 }
-
-/*
-ASSIGMENT 1
-Some relevant questions here (some may apply later) are: 
-Do we center the robot on the line?
-Are the sensors on the back or the front of the robot?
-Are we telling the robot to center itself on the line at this point?
-To debug this program, it's mostly necessary to have the robot around.  For example, to read the values from the sensors and get a feel for relative measurements.
-*Should the robot be able to measure a white line inst a dark settint
-*Does a partial covering of the sensor affect its measurement?
-*/
-
-/*
-e(t) is -x(t) since the desired position d(t) == 0.y
-Controller box - simplest: proportional controller.  u(t) = kp*e(t) coefficient k,(e.g. k units to the right, k units to the left).
-
-turn with a speed proportional to the error signal. (m1(t) or m2(t))
-
-oscillation will occur if you increase kp over kc(critical), where the whole starts to oscillate.
-
-Solution is to include a turn in the controller taking into account rate of speed change.
-
-temporal derivative of e(t)
-
-pd u(t) =  kp*e(t) + kd*e'(t)
-
-PID u(t) = kp*e(t) + ki*int(e(t)) + kd*e'(t)
-
-investigate utilization of Runge-Kutta methods. (This is why Daniel uses Runge-Kutta.  He got it from robotics.)
-*/
