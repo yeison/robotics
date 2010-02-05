@@ -135,6 +135,11 @@ void dance(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
 	set_motors(0,0);
 }
 
+void runIt(int val) 
+{
+	val=val/10;
+	set_motors(50, 50-val);
+}
 // Initializes the 3pi, displays a welcome message, calibrates, and
 // plays the initial music.
 void initialize()
@@ -162,6 +167,7 @@ int main()
   unsigned int minv[5], maxv[5]; 
   // line position relative to center
   int position = 0;
+  int runner = 0;
   
   int i;
 
@@ -174,8 +180,8 @@ int main()
   // Display calibrated sensor values as a bar graph.
   dance(sensors, minv, maxv);
   while(1) {
-    if (button_is_pressed(BUTTON_B)) { run = 1-run; delay(200); }
-    if (button_is_pressed(BUTTON_A)) { speed -= 10; delay(100); }
+    if (button_is_pressed(BUTTON_B)) { run = 1-run; delay(200); runner=1;}
+    if (button_is_pressed(BUTTON_A)) { speed -= 10; delay(100); runner=0;}
     if (button_is_pressed(BUTTON_C)) { speed += 10; delay(100); }
     
     // Read the line sensor values
@@ -187,7 +193,7 @@ int main()
 
     // compute line positon
     position = line_position(sensors, minv, maxv);
-
+if (runner){runIt(position);}
     // display bargraph
     clear();
     print_long(position);
@@ -195,6 +201,6 @@ int main()
     // for (i=0; i<8; i++) { print_character(display_characters[i]); }
     display_bars(sensors, minv, maxv);
     
-    delay_ms(10);
+    delay_ms(50);
   }
 }
