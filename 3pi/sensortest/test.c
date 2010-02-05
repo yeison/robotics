@@ -22,7 +22,7 @@ int run=0;
 
 // Introductory messages.  The "PROGMEM" identifier 
 // causes the data to go into program space.
-const char hello[] PROGMEM = "NYU/CBLL";
+const char hello[] PROGMEM = "Steve L";
 
 /*Notes
  *1k of RAM 8k of flash.  PROGMEM places on flash?  More space on flash.
@@ -37,6 +37,7 @@ const char hello[] PROGMEM = "NYU/CBLL";
 // and display_readings.  By reading levels[] starting at various
 // offsets, we can generate all of the 7 extra characters needed for a
 // bargraph.  This is also stored in program space.
+
 const char levels[] PROGMEM = {
 	0b00000,
 	0b00000,
@@ -53,6 +54,16 @@ const char levels[] PROGMEM = {
 	0b11111,
 	0b11111
 };
+
+const char melody[] PROGMEM = "!L16 V8 cdefgab>cbagfedc";
+//const char zelda[] PROGMEM = "!T160 L16 V8 bbbb rrbr brbrbr bb.rar bb rrbr brbrbr bb.rar bb rrbr brbrbr bbrfrfr ffrfrfr";
+const char bach[] PROGMEM = "!T240 L8 a gafaeada c+adaeafa >aa>bac#ada c#adaeaf4";
+const char rhapsody[] PROGMEM = "O6 T40 L8 d#<b<f#<d#<f#<bd#f#"   
+  "T80 c#<b-<f#<c#<f#<b-c#8"   
+  "T180 d#b<f#d#f#>bd#f#c#b-<f#c#f#>b-c#8 c>c#<c#>c#<b>c#<c#>c#c>c#<c#>c#<b>c#<c#>c#"   
+  "c>c#<c#>c#<b->c#<c#>c#c>c#<c#>c#<b->c#<c#>c#"   
+  "c>c#<c#>c#f>c#<c#>c#c>c#<c#>c#f>c#<c#>c#"   
+  "c>c#<c#>c#f#>c#<c#>c#c>c#<c#>c#f#>c#<c#>c#d#bb-bd#bf#d#c#b-ab-c#b-f#d#";  
 
 char display_characters[9] = { ' ', 0, 1, 2, 3, 4, 5, 6, 255 };
 
@@ -94,11 +105,11 @@ void update_bounds(const unsigned int *s, unsigned int *minv, unsigned int *maxv
 // return line position
 // YOU MUST WRITE THIS.
 long line_position(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
-  long i;
+  int i;
   long position;
   long numSum = 0;
   long denSum = 0;
-  long sense[] = {0, 0, 0, 0, 0};
+  int sense[] = {0, 0, 0, 0, 0};
   
   for(i = 0; i < 5; i+=1){
     sense[i] = (100*((s[i]-minv[i])))/(maxv[i]-minv[i]);
@@ -138,7 +149,7 @@ void dance(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
 void runIt(int val) 
 {
 	val=val/10;
-	set_motors(50, 50-val);
+	set_motors(50+val, 50-val);
 }
 // Initializes the 3pi, displays a welcome message, calibrates, and
 // plays the initial music.
@@ -167,22 +178,29 @@ int main()
   unsigned int minv[5], maxv[5]; 
   // line position relative to center
   int position = 0;
-  int runner = 0;
-  
   int i;
+  char play_switch = 0;
 
   // set up the 3pi, and wait for B button to be pressed
   initialize();
   
   read_line_sensors(sensors,IR_EMITTERS_ON);
   for (i=0; i<5; i++) { minv[i] = maxv[i] = sensors[i]; }
+    
+    
 
   // Display calibrated sensor values as a bar graph.
   dance(sensors, minv, maxv);
   while(1) {
-    if (button_is_pressed(BUTTON_B)) { run = 1-run; delay(200); runner=1;}
-    if (button_is_pressed(BUTTON_A)) { speed -= 10; delay(100); runner=0;}
-    if (button_is_pressed(BUTTON_C)) { speed += 10; delay(100); }
+    if (button_is_pressed(BUTTON_B)) { 
+      run = 1-run; 
+      delay(200);
+    }
+    if (button_is_pressed(BUTTON_A)) { speed -= 10; delay(100);}
+    if (button_is_pressed(BUTTON_C)) { speed += 10; 
+      delay(100);
+      play_switch += 1;
+    }
     
     // Read the line sensor values
     read_line_sensors(sensors, IR_EMITTERS_ON);
@@ -193,7 +211,15 @@ int main()
 
     // compute line positon
     position = line_position(sensors, minv, maxv);
-if (runner){runIt(position);}
+    if (run) {
+      runIt(position);
+    }
+    if(!run) {set_motors(0, 0);}
+    if(play_switch){
+      play_from_program_space(rhapsody);
+      play_switch = 0;
+    }
+
     // display bargraph
     clear();
     print_long(position);
