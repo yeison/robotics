@@ -16,7 +16,7 @@
 #include <math.h>
 
 // speed of the robot
-int speed = 100;
+int speed = 50;
 // if =1 run the robot, if =0 stop
 int run=0;
 
@@ -116,9 +116,7 @@ long line_position(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
     //sense[i] = s[i];
     //Here we could possibly print a message indicating that there is no line
     //if that is indeed the case according to the sensors.
-    numSum += (sense[i])*(i-2)*1000;
-      if(numSum == 0)
-	numSum += 1;
+    numSum += (sense[i])*(i-2)*100;
     denSum += (sense[i]);
       if(denSum == 0)
 	denSum += 1;
@@ -151,10 +149,11 @@ void dance(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
 	set_motors(0,0);
 }
 
+
 void runIt(int val) 
 {
-  	val=val/10;
-	set_motors(40+val, 40-val);
+  //val=(int)val*.08;
+  set_motors(speed+val, speed-val);
 }
 
 // Initializes the 3pi, displays a welcome message, calibrates, and
@@ -183,9 +182,16 @@ int main()
   // for calibration
   unsigned int minv[5], maxv[5]; 
   // line position relative to center
+  int oldposition = 0;
   int position = 0;
   int i;
-  char play_switch = 0;
+  long integral;
+  int kp = 0;
+  float kd;
+  float ka;
+  float ut;
+  long difference;
+  //char play_switch = 0;
 
   // set up the 3pi, and wait for B button to be pressed
   initialize();
@@ -202,10 +208,16 @@ int main()
       run = 1-run; 
       delay(200);
     }
-    if (button_is_pressed(BUTTON_A)) { speed -= 10; delay(100);}
-    if (button_is_pressed(BUTTON_C)) { speed += 10; 
+    if (button_is_pressed(BUTTON_A)) { 
+      //speed -= 10; delay(100);
+      kp = kp - 1;
       delay(100);
-      play_switch += 1;
+    }
+    if (button_is_pressed(BUTTON_C)) { 
+      kp = kp + 1;
+      //speed += 10; 
+      delay(100);
+      // play_switch += 1;
     }
     
     // Read the line sensor values
@@ -214,22 +226,30 @@ int main()
     // and put normalized values in v
     //update_bounds(sensors, minv, maxv);
 
+    //update_bounds(sensors, minv, maxv);
 
     // compute line positon
+    oldposition = position;
     position = line_position(sensors, minv, maxv);
-    update_bounds(sensors, minv, maxv);
+    difference = (position - oldposition)/10;
+    ut = (position*kp)/100;
+    ut = (position*kp)/100 + difference*kd;
+    //    ut = position*kp + integral*ka + difference * kd;
     if (run) {
-      runIt(position);
+      runIt(ut);
     }
     if(!run) {set_motors(0, 0);}
-    if(play_switch){
-      play_from_program_space(rhapsody);
-      play_switch = 0;
-    }
+    //if(play_switch){
+    //play_from_program_space(rhapsody);
+    //play_switch = 0;
+    //}
 
     // display bargraph
     clear();
-    print_long(position);
+      //print_long(position);
+      print_long(kp);
+      lcd_goto_xy(4, 0);  
+      print_long(ut);
     lcd_goto_xy(0,1);
     // for (i=0; i<8; i++) { print_character(display_characters[i]); }
     display_bars(sensors, minv, maxv);
