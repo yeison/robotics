@@ -113,10 +113,15 @@ long line_position(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
   
   for(i = 0; i < 5; i+=1){
     sense[i] = (100*((s[i]-minv[i])))/(maxv[i]-minv[i]);
+    //sense[i] = s[i];
     //Here we could possibly print a message indicating that there is no line
     //if that is indeed the case according to the sensors.
     numSum += (sense[i])*(i-2)*1000;
+      if(numSum == 0)
+	numSum += 1;
     denSum += (sense[i]);
+      if(denSum == 0)
+	denSum += 1;
   }
 
   //print_long(sense[2]);
@@ -125,7 +130,6 @@ long line_position(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
   //We may use something like a status variable, denoting whether the previous
   //sensor was activated.  In that case we can tell that there are contiguous
   //sensors being activated. (i.e. a thicker line).
-
     return position;
 }
 
@@ -143,14 +147,16 @@ void dance(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
 		// 80*20 = 1600 ms.
 		delay_ms(20);
 	}
+	
 	set_motors(0,0);
 }
 
 void runIt(int val) 
 {
-	val=val/10;
-	set_motors(50+val, 50-val);
+  	val=val/10;
+	set_motors(40+val, 40-val);
 }
+
 // Initializes the 3pi, displays a welcome message, calibrates, and
 // plays the initial music.
 void initialize()
@@ -183,7 +189,7 @@ int main()
 
   // set up the 3pi, and wait for B button to be pressed
   initialize();
-  
+
   read_line_sensors(sensors,IR_EMITTERS_ON);
   for (i=0; i<5; i++) { minv[i] = maxv[i] = sensors[i]; }
     
@@ -206,11 +212,12 @@ int main()
     read_line_sensors(sensors, IR_EMITTERS_ON);
     // update minv and maxv values,
     // and put normalized values in v
-    update_bounds(sensors, minv, maxv);
+    //update_bounds(sensors, minv, maxv);
 
 
     // compute line positon
     position = line_position(sensors, minv, maxv);
+    update_bounds(sensors, minv, maxv);
     if (run) {
       runIt(position);
     }
@@ -226,7 +233,7 @@ int main()
     lcd_goto_xy(0,1);
     // for (i=0; i<8; i++) { print_character(display_characters[i]); }
     display_bars(sensors, minv, maxv);
-    
-    delay_ms(50);
+      delay(10);
+   
   }
 }
