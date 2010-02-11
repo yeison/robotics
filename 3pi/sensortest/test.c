@@ -16,7 +16,7 @@
 #include <math.h>
 
 // speed of the robot
-int speed = 60;
+int speed = 80;
 // if =1 run the robot, if =0 stop
 int run=0;
 
@@ -55,15 +55,6 @@ const char levels[] PROGMEM = {
 	0b11111
 };
 
-const char melody[] PROGMEM = "!L16 V8 cdefgab>cbagfedc";
-//const char zelda[] PROGMEM = "!T160 L16 V8 bbbb rrbr brbrbr bb.rar bb rrbr brbrbr bb.rar bb rrbr brbrbr bbrfrfr ffrfrfr";
-const char bach[] PROGMEM = "!T240 L8 a gafaeada c+adaeafa >aa>bac#ada c#adaeaf4";
-const char rhapsody[] PROGMEM = "O6 T40 L8 d#<b<f#<d#<f#<bd#f#"   
-  "T80 c#<b-<f#<c#<f#<b-c#8"   
-  "T180 d#b<f#d#f#>bd#f#c#b-<f#c#f#>b-c#8 c>c#<c#>c#<b>c#<c#>c#c>c#<c#>c#<b>c#<c#>c#"   
-  "c>c#<c#>c#<b->c#<c#>c#c>c#<c#>c#<b->c#<c#>c#"   
-  "c>c#<c#>c#f>c#<c#>c#c>c#<c#>c#f>c#<c#>c#"   
-  "c>c#<c#>c#f#>c#<c#>c#c>c#<c#>c#f#>c#<c#>c#d#bb-bd#bf#d#c#b-ab-c#b-f#d#";  
 
 char display_characters[9] = { ' ', 0, 1, 2, 3, 4, 5, 6, 255 };
 
@@ -109,26 +100,19 @@ long line_position(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
   long position;
   long numSum = 0;
   long denSum = 0;
-  int sense[] = {0, 0, 0, 0, 0};
+  long sense[] = {0, 0, 0, 0, 0};
   
   for(i = 0; i < 5; i+=1){
-    sense[i] = (100*((s[i]-minv[i])))/(maxv[i]-minv[i]);
-    //sense[i] = s[i];
-    //Here we could possibly print a message indicating that there is no line
-    //if that is indeed the case according to the sensors.
-    numSum += (sense[i])*(i-2)*100;
-    denSum += (sense[i]);
-      if(denSum == 0)
-	denSum += 1;
+    sense[i] = (100*((long)s[i]-(long)minv[i]))/((long)maxv[i]-(long)minv[i]);
+    numSum += sense[i]*(i-2)*100;
+    denSum += sense[i];
   }
+  if(denSum == 0)
+    denSum += 1;
 
-  //print_long(sense[2]);
 
   position = numSum/denSum;
-  //We may use something like a status variable, denoting whether the previous
-  //sensor was activated.  In that case we can tell that there are contiguous
-  //sensors being activated. (i.e. a thicker line).
-    return position;
+  return position;
 }
 
 // Make a little dance: Turn left and right
@@ -188,12 +172,11 @@ int main()
   int position = 0;
   long integral = 0;
   int kc = 85; //Kc seems to be 60 using current values.
-  int kp = 40; //40
-  int kd = 40; //10
-  int ki = 100; //100
+  int kp = 120; //40
+  int kd = 10; //10
+  int ki = 0; //100
   int ut = 0;
   int dt = 0;
-  char play_switch = 0;
   int *editable = &kp;
 
   // set up the 3pi, and wait for B button to be pressed
@@ -206,11 +189,24 @@ int main()
 
   // Display calibrated sensor values as a bar graph.
   dance(sensors, minv, maxv);
+  while (!button_is_pressed(BUTTON_B)){
+      read_line_sensors(sensors,IR_EMITTERS_ON);
+      position = line_position(sensors, minv, maxv);
+      clear();
+      lcd_goto_xy(0, 0);
+      print_long(position);
+      //      lcd_goto_xy(4,0);
+      //      print_long(minv[0]);
+      lcd_goto_xy(0,1);
+      display_bars(sensors, minv, maxv);
+      delay(50);
+    }
+
+
   while(1) {
     if (button_is_pressed(BUTTON_B)) { 
       run = 1-run; 
       int ut = 0;
-      int dt = 0;
       int difference = 0;
       int oldposition = 0;
       int position = 0;
@@ -252,22 +248,16 @@ int main()
 
     if(!run) {set_motors(0, 0);}
 
-    if(play_switch){
-      play_from_program_space(rhapsody);
-      play_switch = 0;
-    }
 
     // display bargraph
     clear();
-    //print_long(position);
     print_long(*editable);
     lcd_goto_xy(4, 0);  
-    print_long(dt);
+    print_long(kp);
     lcd_goto_xy(0,1);
     // for (i=0; i<8; i++) { print_character(display_characters[i]); }
     display_bars(sensors, minv, maxv);
-    delay(100);
-
+    
    
   }
 }
