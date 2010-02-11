@@ -16,7 +16,7 @@
 #include <math.h>
 
 // speed of the robot
-int speed = 50;
+int speed = 60;
 // if =1 run the robot, if =0 stop
 int run=0;
 
@@ -134,7 +134,7 @@ long line_position(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
 // Make a little dance: Turn left and right
 void dance(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
 	int counter;
-	for(counter=0;counter<80;counter++)	{
+	for(counter=0;counter<80;counter++){
 	  read_line_sensors(s, IR_EMITTERS_ON);
 	  update_bounds(s, minv, maxv);
 		if(counter < 20 || counter >= 60)
@@ -153,6 +153,7 @@ void dance(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
 void runIt(int val) 
 {
   //val=(int)val*.08;
+  val /= 2;
   set_motors(speed+val, speed-val);
 }
 
@@ -169,7 +170,6 @@ void initialize()
   print_from_program_space(hello);
   lcd_goto_xy(0,1);
   print("Press B");
-
 }
 
 // This is the main function, where the code starts.  All C programs
@@ -177,21 +177,24 @@ void initialize()
 int main()
 {
   // global array to hold sensor values
-  unsigned int sensors[5]; 
+  unsigned int sensors[5];
   // global arrays to hold min and max sensor values
   // for calibration
-  unsigned int minv[5], maxv[5]; 
+  unsigned int minv[5], maxv[5];
   // line position relative to center
+  int i;
+  int difference = 0;
   int oldposition = 0;
   int position = 0;
-  int i;
-  long integral;
-  int kp = 0;
-  float kd;
-  float ka;
-  float ut;
-  long difference;
-  //char play_switch = 0;
+  long integral = 0;
+  int kc = 85; //Kc seems to be 60 using current values.
+  int kp = 40; //40
+  int kd = 40; //10
+  int ki = 100; //100
+  int ut = 0;
+  int dt = 0;
+  char play_switch = 0;
+  int *editable = &kp;
 
   // set up the 3pi, and wait for B button to be pressed
   initialize();
@@ -206,19 +209,27 @@ int main()
   while(1) {
     if (button_is_pressed(BUTTON_B)) { 
       run = 1-run; 
+      int ut = 0;
+      int dt = 0;
+      int difference = 0;
+      int oldposition = 0;
+      int position = 0;
+      long integral = 0;
       delay(200);
     }
     if (button_is_pressed(BUTTON_A)) { 
       //speed -= 10; delay(100);
-      kp = kp - 1;
+      *editable = *editable - 1;
       delay(100);
     }
     if (button_is_pressed(BUTTON_C)) { 
-      kp = kp + 1;
+      *editable = *editable + 1;
       //speed += 10; 
       delay(100);
       // play_switch += 1;
     }
+    //compute delta t (time it takes for the loop to iterate once)
+    dt = millis() - dt;
     
     // Read the line sensor values
     read_line_sensors(sensors, IR_EMITTERS_ON);
@@ -231,29 +242,32 @@ int main()
     // compute line positon
     oldposition = position;
     position = line_position(sensors, minv, maxv);
-    difference = (position - oldposition)/10;
-    ut = (position*kp)/100;
-    ut = (position*kp)/100 + difference*kd;
-    //    ut = position*kp + integral*ka + difference * kd;
+    difference = (position - oldposition)/dt;
+    
     if (run) {
+      integral = integral + (((position + oldposition)/2)*dt);
+      ut = (position*kp + difference*kd + integral/ki)/100;
       runIt(ut);
     }
+
     if(!run) {set_motors(0, 0);}
-    //if(play_switch){
-    //play_from_program_space(rhapsody);
-    //play_switch = 0;
-    //}
+
+    if(play_switch){
+      play_from_program_space(rhapsody);
+      play_switch = 0;
+    }
 
     // display bargraph
     clear();
-      //print_long(position);
-      print_long(kp);
-      lcd_goto_xy(4, 0);  
-      print_long(ut);
+    //print_long(position);
+    print_long(*editable);
+    lcd_goto_xy(4, 0);  
+    print_long(dt);
     lcd_goto_xy(0,1);
     // for (i=0; i<8; i++) { print_character(display_characters[i]); }
     display_bars(sensors, minv, maxv);
-      delay(10);
+    delay(100);
+
    
   }
 }
