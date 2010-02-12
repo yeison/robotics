@@ -16,7 +16,7 @@
 #include <math.h>
 
 // speed of the robot
-int speed = 80;
+int speed = 120;
 // if =1 run the robot, if =0 stop
 int run=0;
 
@@ -172,8 +172,8 @@ int main()
   int position = 0;
   long integral = 0;
   int kc = 85; //Kc seems to be 60 using current values.
-  int kp = 120; //40
-  int kd = 10; //10
+  int kp = 170; //40
+  int kd = 0; //10
   int ki = 0; //100
   int ut = 0;
   int dt = 0;
