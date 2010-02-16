@@ -16,7 +16,7 @@
 #include <math.h>
 
 // speed of the robot
-int speed = 145;
+int speed = 185;
 // if =1 run the robot, if =0 stop
 int run=0;
 
@@ -173,16 +173,16 @@ int main()
   unsigned int minv[5], maxv[5];
   // line position relative to center
   int i;
-  int difference = 0;
-  int oldposition = 0;
-  int position = 0;
+  long difference = 0;
+  long oldposition = 0;
+  long position = 0;
   long integral = 0;
-  int kc = 85; //Kc seems to be 60 using current values.
-  int kp = 135; //40
-  int kd = 145; //10
-  int ki = 750; //100
-  int ut = 0;
-  int dt = 0;
+  long kc = 85; //Kc seems to be 60 using current values.
+  long kp = 215; //40
+  long kd = 295; //10
+  long ki = 40000; //100
+  long ut = 0;
+  long dt = 0;
   int *editable = &kd;
 
   // set up the 3pi, and wait for B button to be pressed
@@ -215,11 +215,11 @@ int main()
     if (button_is_pressed(BUTTON_B)) {
       delay(100);
       run = 1-run; 
-      int ut = 0;
-      int difference = 0;
-      int oldposition = 0;
-      int position = 0;
-      int integral = 0;
+      long ut = 0;
+      long difference = 0;
+      long oldposition = 0;
+      long position = 0;
+      long integral = 0;
       delay(200);
     }
     if (button_is_pressed(BUTTON_A)) { 
@@ -255,7 +255,8 @@ int main()
       runIt(ut);
     }
 
-    if(!run) {set_motors(0, 0);
+    if(!run) {
+      set_motors(0, 0);
       // display bargraph
       clear();
       print_long(*editable);
