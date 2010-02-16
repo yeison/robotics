@@ -16,7 +16,7 @@
 #include <math.h>
 
 // speed of the robot
-int speed = 120;
+int speed = 145;
 // if =1 run the robot, if =0 stop
 int run=0;
 
@@ -134,11 +134,17 @@ void dance(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
 }
 
 
-void runIt(int val) 
+void runIt(long val) 
 {
+  long speed_left;
+  long speed_right;
   //val=(int)val*.08;
-  val /= 2;
-  set_motors(speed+val, speed-val);
+  //if(val > 100){
+  //val = .9*val;
+  //}
+  speed_left = speed + val;
+  speed_right = speed - val;
+  set_motors(speed_left, speed_right);
 }
 
 // Initializes the 3pi, displays a welcome message, calibrates, and
@@ -172,12 +178,12 @@ int main()
   int position = 0;
   long integral = 0;
   int kc = 85; //Kc seems to be 60 using current values.
-  int kp = 170; //40
-  int kd = 0; //10
-  int ki = 0; //100
+  int kp = 135; //40
+  int kd = 145; //10
+  int ki = 750; //100
   int ut = 0;
   int dt = 0;
-  int *editable = &kp;
+  int *editable = &kd;
 
   // set up the 3pi, and wait for B button to be pressed
   initialize();
@@ -188,29 +194,32 @@ int main()
     
 
   // Display calibrated sensor values as a bar graph.
-  dance(sensors, minv, maxv);
   while (!button_is_pressed(BUTTON_B)){
-      read_line_sensors(sensors,IR_EMITTERS_ON);
-      position = line_position(sensors, minv, maxv);
-      clear();
-      lcd_goto_xy(0, 0);
-      print_long(position);
-      //      lcd_goto_xy(4,0);
-      //      print_long(minv[0]);
-      lcd_goto_xy(0,1);
-      display_bars(sensors, minv, maxv);
-      delay(50);
-    }
+    read_line_sensors(sensors,IR_EMITTERS_ON);
+    position = line_position(sensors, minv, maxv);
+    clear();
+    lcd_goto_xy(0, 0);
+    print_long(position);
+    //      lcd_goto_xy(4,0);
+    //      print_long(minv[0]);
+    lcd_goto_xy(0,1);
+    display_bars(sensors, minv, maxv);
+    delay(50);
+  }
+  
+  delay(50);  
+  dance(sensors, minv, maxv);
 
 
   while(1) {
-    if (button_is_pressed(BUTTON_B)) { 
+    if (button_is_pressed(BUTTON_B)) {
+      delay(100);
       run = 1-run; 
       int ut = 0;
       int difference = 0;
       int oldposition = 0;
       int position = 0;
-      long integral = 0;
+      int integral = 0;
       delay(200);
     }
     if (button_is_pressed(BUTTON_A)) { 
@@ -246,17 +255,17 @@ int main()
       runIt(ut);
     }
 
-    if(!run) {set_motors(0, 0);}
+    if(!run) {set_motors(0, 0);
+      // display bargraph
+      clear();
+      print_long(*editable);
+      lcd_goto_xy(4, 0);  
+      print_long(ut);
+      lcd_goto_xy(0,1);
+      for (i=0; i<8; i++) { print_character(display_characters[i]); }
+      display_bars(sensors, minv, maxv);
+    }
 
-
-    // display bargraph
-    clear();
-    print_long(*editable);
-    lcd_goto_xy(4, 0);  
-    print_long(kp);
-    lcd_goto_xy(0,1);
-    // for (i=0; i<8; i++) { print_character(display_characters[i]); }
-    display_bars(sensors, minv, maxv);
     
    
   }
