@@ -7,6 +7,7 @@
 // The 3pi include file must be at the beginning of any program that
 // uses the Pololu AVR library and 3pi.
 #include <pololu/3pi.h>
+#include "3pi_kinematics.h"
 //#include <pololu/orangutan.h>
 
 // This include file allows data to be stored in program space.  The
@@ -16,7 +17,7 @@
 #include <math.h>
 
 // speed of the robot
-int speed = 145;
+int speed = 30;
 // if =1 run the robot, if =0 stop
 int run=0;
 
@@ -179,8 +180,8 @@ int main()
   long integral = 0;
   int kc = 85; //Kc seems to be 60 using current values.
   int kp = 144; //40
-  int kd = 145; //10
-  int ki = 10000; //100
+  int kd = 0; //10
+  int ki = 0; //100
   int ut = 0;
   int dt = 0;
   int *editable = &kd;
@@ -220,6 +221,7 @@ int main()
       int oldposition = 0;
       int position = 0;
       int integral = 0;
+      int dt = millis();
       delay(200);
     }
     if (button_is_pressed(BUTTON_A)) { 
