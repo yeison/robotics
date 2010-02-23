@@ -6,7 +6,7 @@ CC=avr-gcc
 OBJ2HEX=avr-objcopy 
 LDFLAGS=-Wl,-gc-sections -lpololu_$(DEVICE) -Wl,-relax
 
-PORT ?= /dev/ttyUSB0
+PORT ?= /dev/ttyACM0
 AVRDUDE=avrdude
 
 TARGET=test
