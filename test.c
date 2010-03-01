@@ -163,6 +163,63 @@ void initialize()
   print("Press B");
 }
 
+
+int EndOfLine(unsigned int *s, unsigned int *minv, unsigned int *maxv) 
+{
+  int i, j, k = 0;
+  long position;
+  long numSum = 0;
+  long denSum = 0;
+  long sense[] = {0, 0, 0, 0, 0};
+
+
+  for(i = 0; i < 5; i+=1)
+    sense[i] = (100*((long)s[i]-(long)minv[i]))/((long)maxv[i]-(long)minv[i]);
+
+  for(i = 0; i < 5; i+=1)
+    if( sense[i]>20 )
+      k=1;
+  return k;
+}
+
+
+long robot_position(dt, x_i, y_i){
+  alpha = (theta_i + theta_i+1)/2;
+  x_i+1 = motor2speed(speed)*dt*sin(alpha) + x_i;
+  y_i+1 = motor2speed(speed)*dt*cos(alpha) + y_i;
+}
+
+int theta_i = 0;
+int theta_i+1 = 0;
+
+void calibrate_m2angle(){
+  delT = millis();
+  for(counter=0;counter<80;counter++){
+    if(counter < 20 || counter >= 60)
+      set_motors(40,-40);
+    //else
+    //set_motors(-40,40);
+    // Since our counter runs to 80, the total delay will be
+    // 80*20 = 1600 ms.
+    delT = millis() - delT;
+  }
+
+  delT = millis();
+  for(counter=0; counter<80 ;counter++){
+    if(counter < 20 || counter >= 60)
+      set_motors(50,-50);
+    //else
+    //set_motors(-40,40);
+    // Since our counter runs to 80, the total delay will be
+    // 80*20 = 1600 ms.
+    delT = millis() - delT;
+  }
+	
+  set_motors(0,0);
+
+}
+
+
 // This is the main function, where the code starts.  All C programs
 // must have a main() function defined somewhere.
 int main()
