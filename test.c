@@ -1,19 +1,19 @@
-/* 
-  3PI template code for NYU "Intro to Robotics" course. 
+/*3PI template code for NYU "Intro to Robotics" course. 
   Yann LeCun, 02/2009. 
-  This program was modified from an example program from Pololu.  
-*/ 
+  This program was modified from an example program from Pololu.  */ 
 // The 3pi include file must be at the beginning of any program that 
 // uses the Pololu AVR library and 3pi. 
+//#include <pololu/orangutan.h> 
 #include <pololu/3pi.h> 
 #include "3pi_kinematics.h"
-//#include <pololu/orangutan.h> 
+#include <avr/pgmspace.h> 
+#include <math.h> 
+#include "header.h"
+#include "calibrate.h"
  
 // This include file allows data to be stored in program space.  The 
 // ATmega168 has 16k of program space compared to 1k of RAM, so large 
 // pieces of static data should be stored in program space. 
-#include <avr/pgmspace.h> 
-#include <math.h> 
  
 // speed of the robot 
 int speed = 30; 
@@ -21,7 +21,7 @@ int run=0;
  
 // Introductory messages.  The "PROGMEM" identifier  
 // causes the data to go into program space. 
-const char hello[] PROGMEM = "Steve L"; 
+const char hello[] PROGMEM = "TACHIKOMA"; 
  
 /*Notes 
  *1k of RAM 8k of flash.  PROGMEM places on flash?  More space on flash. 
@@ -133,18 +133,65 @@ void dance(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
 }
 
 
-void runIt(long val) 
-{
+long theta;
+long theta_i;
+
+long theta_new(long dt, long left, long right){
+  return theta + motor2angle(left, right) * dt;
+}
+
+long alpha(){
+  //Remember maybe we might need to subtract alpha from 90
+  return (theta + theta_i)/2;
+}
+
+long theta = 0;
+long theta_i = 0;
+
+coords robot_position(dt, x_i, y_i){
+  coords robot_pos;
+  robot_pos.x = motor2speed(speed)*dt*Sin(alpha()) + x_i;
+  robot_pos.y = motor2speed(speed)*dt*Cos(alpha()) + y_i;
+  return robot_pos;
+}
+
+coords runIt(long val, long dt) {
+  coords position;
+  position.x = 0;
+  position.y = 0;
   long speed_left;
   long speed_right;
-  //val=(int)val*.08;
-  //if(val > 100){
-  //val = .9*val;
-  //}
+  long alphav;
+
   speed_left = speed + val;
   speed_right = speed - val;
   set_motors(speed_left, speed_right);
+  theta = motor2angle(speed_left, speed_right);
+  theta_i = theta_new(dt, speed_left, speed_right);
+  alphav = alpha();
+  
+  position = robot_position(dt, position.x, position.y);
+  return position;
+  
 }
+
+
+int EndOfLine(unsigned int *s, unsigned int *minv, unsigned int *maxv) 
+{
+  int i, k = 0;
+  long sense[] = {0, 0, 0, 0, 0};
+
+
+  for(i = 0; i < 5; i+=1)
+    sense[i] = (100*((long)s[i]-(long)minv[i]))/((long)maxv[i]-(long)minv[i]);
+
+  for(i = 0; i < 5; i+=1)
+    if( sense[i]>20 )
+      k=1;
+  return k;
+}
+
+
 
 // Initializes the 3pi, displays a welcome message, calibrates, and
 // plays the initial music.
@@ -159,62 +206,6 @@ void initialize()
   print_from_program_space(hello);
   lcd_goto_xy(0,1);
   print("Press B");
-}
-
-
-int EndOfLine(unsigned int *s, unsigned int *minv, unsigned int *maxv) 
-{
-  int i, j, k = 0;
-  long position;
-  long numSum = 0;
-  long denSum = 0;
-  long sense[] = {0, 0, 0, 0, 0};
-
-
-  for(i = 0; i < 5; i+=1)
-    sense[i] = (100*((long)s[i]-(long)minv[i]))/((long)maxv[i]-(long)minv[i]);
-
-  for(i = 0; i < 5; i+=1)
-    if( sense[i]>20 )
-      k=1;
-  return k;
-}
-
-
-long robot_position(dt, x_i, y_i){
-  alpha = (theta_i + theta_i+1)/2;
-  x_i+1 = motor2speed(speed)*dt*sin(alpha) + x_i;
-  y_i+1 = motor2speed(speed)*dt*cos(alpha) + y_i;
-}
-
-int theta_i = 0;
-int theta_i+1 = 0;
-
-void calibrate_m2angle(){
-  delT = millis();
-  for(counter=0;counter<80;counter++){
-    if(counter < 20 || counter >= 60)
-      set_motors(40,-40);
-    //else
-    //set_motors(-40,40);
-    // Since our counter runs to 80, the total delay will be
-    // 80*20 = 1600 ms.
-    delT = millis() - delT;
-  }
-
-  delT = millis();
-  for(counter=0; counter<80 ;counter++){
-    if(counter < 20 || counter >= 60)
-      set_motors(50,-50);
-    //else
-    //set_motors(-40,40);
-    // Since our counter runs to 80, the total delay will be
-    // 80*20 = 1600 ms.
-    delT = millis() - delT;
-  }
-	
-  set_motors(0,0);
-
 }
 
 
@@ -240,26 +231,29 @@ int main()
   int ut = 0;
   int dt = 0;
   int *editable = &kd;
+  coords robsp;
 
   // set up the 3pi, and wait for B button to be pressed
   initialize();
 
   read_line_sensors(sensors,IR_EMITTERS_ON);
-  for (i=0; i<5; i++) { minv[i] = maxv[i] = sensors[i]; }
-    
+  for (i=0; i<5; i++) { minv[i] = maxv[i] = sensors[i]; }    
     
 
   // Display calibrated sensor values as a bar graph.
   while (!button_is_pressed(BUTTON_B)){
+    clear();
+    print_from_program_space(tocalib);
+    lcd_goto_xy(0,1);
+    print_from_program_space(calibrateA);    
+    delay(50);
+    if(button_is_pressed(BUTTON_A))
+      calibrate_m2angle();
     read_line_sensors(sensors,IR_EMITTERS_ON);
     position = line_position(sensors, minv, maxv);
-    clear();
-    lcd_goto_xy(0, 0);
-    print_long(position);
     //      lcd_goto_xy(4,0);
     //      print_long(minv[0]);
-    lcd_goto_xy(0,1);
-    display_bars(sensors, minv, maxv);
+    //display_bars(sensors, minv, maxv);
     delay(50);
   }
   
@@ -271,19 +265,21 @@ int main()
     if (button_is_pressed(BUTTON_B)) {
       delay(100);
       run = 1-run; 
-      int ut = 0;
-      int difference = 0;
-      int oldposition = 0;
-      int position = 0;
-      int integral = 0;
-      int dt = millis();
+      ut = 0;
+      difference = 0;
+      oldposition = 0;
+      position = 0;
+      integral = 0;
+      dt = millis();
       delay(200);
     }
+
     if (button_is_pressed(BUTTON_A)) { 
       //speed -= 10; delay(100);
       *editable = *editable - 1;
       delay(100);
     }
+
     if (button_is_pressed(BUTTON_C)) { 
       *editable = *editable + 1;
       //speed += 10; 
@@ -309,21 +305,25 @@ int main()
     if (run) {
       integral = integral + (((position + oldposition)/2)*dt);
       ut = (position*kp + difference*kd + integral/ki)/100;
-      runIt(ut);
+      robsp = runIt(ut, dt);
+      clear();
+      lcd_goto_xy(0, 0);  
+      print_long(robsp.x);
+      lcd_goto_xy(4, 0);
+      print_long(robsp.y);
     }
 
-    if(!run) {set_motors(0, 0);
+    if(!run) {
+      set_motors(0, 0);
       // display bargraph
-      clear();
-      print_long(*editable);
-      lcd_goto_xy(4, 0);  
-      print_long(ut);
+      //clear();
+      //print_long(*editable);
+      //lcd_goto_xy(4, 0);  
+      //print_long(ut);
       lcd_goto_xy(0,1);
       for (i=0; i<8; i++) { print_character(display_characters[i]); }
       display_bars(sensors, minv, maxv);
-    }
-
-    
+    }    
    
   }
 }
