@@ -138,7 +138,9 @@ long motor2angle(int ml, int mr) {
   // w: width of the robot in 1/10th of mm
   long vl = motor2speed(ml);
   long vr = motor2speed(mr);
-  return (vl-vr)*c360/c5152;
+  /*Yeison:  I modified the old c365 value and used 345 instead.
+    this is based on manual calibration of our robot.*/
+  return (vl-vr)*343/c5152;
 }
 
 

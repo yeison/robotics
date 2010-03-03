@@ -9,10 +9,9 @@ const char calibrate[] PROGMEM = "Calibrate";
 const char calibrateA[] PROGMEM = "Hold A"; 
 const char calibrateB[] PROGMEM = "Press B";
 const char calibrateC[] PROGMEM = "Press C";
+
 void calibrate_m2angle(){
-  int counter;
-  long delT;
-  long angle;
+  
   while(!button_is_pressed(BUTTON_B)){
     lcd_goto_xy(0, 0);
     print_from_program_space(calibrate);    
@@ -20,22 +19,10 @@ void calibrate_m2angle(){
     print_from_program_space(calibrateB);
   }
 
-  delay(100);
-  delT = millis();
-  set_motors(40, -40);
-  angle = motor2angle(40, -40);
-  for(counter=0; counter < 160; counter++){
-    delay_ms(10);
-  }
-  clear();
-  print_long(angle);
+  delay(200);
 
-  delT = millis() - delT;
-  lcd_goto_xy(0,1 );
-  print_long(delT);
+  show_spin(40, 160);
 
-
-  set_motors(0, 0);
   delay_ms(4000);
 
   while(!button_is_pressed(BUTTON_C)){
@@ -45,12 +32,24 @@ void calibrate_m2angle(){
 
   delay_ms(200);
 
+  show_spin(80, 80);
+
+  while(!button_is_pressed(BUTTON_A));
+}
+
+void show_spin(int speed, int duration){
+  int counter;
+  long delT;
+  long angle;  
+
   delT = millis();
-  set_motors(80,-80);
-  angle = motor2angle(80, -80);
-  for(counter=0; counter < 160; counter++){
+  set_motors(speed, -speed);
+  angle = motor2angle(speed, -speed);
+  for(counter=0; counter < duration; counter++){
     delay_ms(10);
   }
+  set_motors(0,0);
+
   clear();
   print_long(angle);
 
@@ -58,9 +57,7 @@ void calibrate_m2angle(){
   lcd_goto_xy(0, 1);
   print_long(delT);
 
-	
-  set_motors(0,0);
-  while(!button_is_pressed(BUTTON_A));
 }
+
 
 #endif /* FILE_B_H_INCLUDED */
