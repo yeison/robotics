@@ -9,13 +9,15 @@
 #include <avr/pgmspace.h> 
 #include <math.h> 
 #include "calibrate.h"
+// speed of the robot 
+int speed = 50; 
+
+#include "robsposition.h"
  
 // This include file allows data to be stored in program space.  The 
 // ATmega168 has 16k of program space compared to 1k of RAM, so large 
 // pieces of static data should be stored in program space. 
  
-// speed of the robot 
-int speed = 30; 
 int run=0; 
  
 // Introductory messages.  The "PROGMEM" identifier  
@@ -91,9 +93,19 @@ void update_bounds(const unsigned int *s, unsigned int *minv, unsigned int *maxv
 	} 
 } 
 
-struct coords{
-  int x;
-  int y;
-};
-
-typedef struct coords coords;
+// Make a little dance: Turn left and right
+void dance(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
+  int counter;
+  for(counter=0;counter<80;counter++){
+    read_line_sensors(s, IR_EMITTERS_ON);
+    update_bounds(s, minv, maxv);
+    if(counter < 20 || counter >= 60)
+      set_motors(40,-40);
+    else
+      set_motors(-40,40);
+    // Since our counter runs to 80, the total delay will be
+    // 80*20 = 1600 ms.
+    delay_ms(20);
+  }
+  set_motors(0,0);
+}
