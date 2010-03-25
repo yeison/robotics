@@ -22,7 +22,7 @@ long robot_width = 820;
 // because they don't fit in 1K of RAM
 // lush: (for (i 0 359) (printf "%d, " (+ 1000 (* 1000 (sin (* i (/ 3.1415927 180)))))))
 const int sin_table[] PROGMEM= 
-  {1000, 1017, 1034, 1052, 1069, 1087, 1104, 1121, 1139, 1156, 1173,
+  {1000, 1017, 1034, 1052, 1069, 1087, 1104, 1121, 1139, 1156, 11*73,
    1190, 1207, 1224, 1241, 1258, 1275, 1292, 1309, 1325, 1342, 1358,
    1374, 1390, 1406, 1422, 1438, 1453, 1469, 1484, 1500, 1515, 1529,
    1544, 1559, 1573, 1587, 1601, 1615, 1629, 1642, 1656, 1669, 1681,
@@ -119,7 +119,7 @@ long motor2speed(int v) {
   // v*4.7682 - 33 mm/s
   // This is robot 493 with fully charged batteries.
   // your mileage (millimeterage) may vary
-  int r = ( (v>0)?v:-v )*250/5 - 330;
+  int r = ( (v>0)?v:-v )*237/10 + 299;
   r = (r>0)?r:0;
   if (v>=0) {
     return (long)(r);
@@ -140,7 +140,7 @@ long motor2angle(int ml, int mr) {
   long vr = motor2speed(mr);
   /*Yeison:  I modified the old c365 value and used 345 instead.
     this is based on manual calibration of our robot.*/
-  return (vl-vr)*360/c5152;
+  return (vl-vr)*365/c5152;
 }
 
 
@@ -167,4 +167,3 @@ long motor2angle_inplace(int v) {
     return (long)(-r);
   }
 }
-

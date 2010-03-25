@@ -96,16 +96,16 @@ void update_bounds(const unsigned int *s, unsigned int *minv, unsigned int *maxv
 // Make a little dance: Turn left and right
 void dance(unsigned int *s, unsigned int *minv, unsigned int *maxv) {
   int counter;
-  for(counter=0;counter<80;counter++){
+  for(counter=0;counter<320;counter++){
     read_line_sensors(s, IR_EMITTERS_ON);
     update_bounds(s, minv, maxv);
-    if(counter < 20 || counter >= 60)
+    if(counter < 80 || counter >= 240)
       set_motors(40,-40);
     else
       set_motors(-40,40);
     // Since our counter runs to 80, the total delay will be
     // 80*20 = 1600 ms.
-    delay_ms(20);
+    delay_ms(5);
   }
   set_motors(0,0);
 }

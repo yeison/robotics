@@ -13,9 +13,11 @@ const char calibrateC[] PROGMEM = "Press C";
 void show_spin(int speed, int duration){
   int counter;
   long delT;
+  long oldTime;
   long angle;  
 
-  delT = millis();
+  
+  oldTime = millis();
   set_motors(speed, -speed);
   angle = motor2angle(speed, -speed);
   for(counter=0; counter < duration; counter++){
@@ -23,10 +25,11 @@ void show_spin(int speed, int duration){
   }
   set_motors(0,0);
 
+  delT = millis() - oldTime;
+
   clear();
   print_long(angle);
 
-  delT = millis() - delT;
   lcd_goto_xy(0, 1);
   print_long(delT);
 

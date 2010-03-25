@@ -38,50 +38,48 @@ int endOfLine(unsigned int *s, unsigned int *minv, unsigned int *maxv)
 }
 
 
-void nposition(long lm, long rm, long dt, long *x, long *y, long *theta){
-  long new_theta = motor2angle(lm, rm)*dt + *theta;
+void nposition(long lm, long rm, long *dt, long *x, long *y, long *theta){
+
+	
+  long new_theta = (motor2angle(lm, rm)*(*dt)) + *theta;
+  clear();
+  lcd_goto_xy(0,1);
+  print_long(new_theta);
 
   long avg_speed = (lm + rm)/2;
-  long avg_theta = (*theta + new_theta)/2;
-  
-  *x = *x + (motor2speed(avg_speed)*(Cos(avg_theta/1000))*dt)/(1000);
-  *y = *y + (motor2speed(avg_speed)*(Sin(avg_theta/1000))*dt)/(1000);
-  *x = *x/10;
-  *y = *y/10;
+  long avg_theta = (*theta + new_theta)/(2*1000);
+  *x = *x + (motor2speed(avg_speed)*(Cos(avg_theta))*(*dt))/(1000);
+  *y = *y + (motor2speed(avg_speed)*(Sin(avg_theta))*(*dt))/(1000);
   
   *theta = new_theta;
 
 }
 
-void spin_by(int degrees){
-  long RADIUS = 410;
-  long PI = 314;
-
-  long mmPerDegree = (4*PI*RADIUS)/(360);
-
+void spin_by(long millimeters){
   //rate of rotation (ror) in (1/10)mm/s
-  long ror = motor2angle(speed, -speed);
+  long ror = motor2angle-(speed, speed);
 
-  //Rate of rotation in degrees/second
-  long angle = ror/(mmPerDegree/100);
-  
-  //Duration in seconds
-  long durationInMS = degrees/angle;
+  //Duration in milliseconds
+  long durationInMS = (millimeters*100)/(ror);
+
   if(durationInMS < 0){
     speed = -speed;
     durationInMS = -durationInMS;
   }
 
+
   //Maybe it should be set to (-speed, speed)
   clear();
   print_long(durationInMS);
-  set_motors(speed, -speed);
+  lcd_goto_xy(0,1);
+  print_long(millimeters);
+  
+  set_motors(-speed, speed);
+  delay_ms(durationInMS);
 
-
-  delay_ms(durationInMS*100);
   set_motors(0, 0);
 
-  delay_ms(5000);
+  delay_ms(500);
 
 }
 
@@ -102,10 +100,9 @@ int initialize()
   load_custom_characters(); // load the custom characters
   // display message
   print_from_program_space(hello);
-  lcd_goto_xy(0,1);
+  lcd_goto_xy(0, 1);
   print("Press B");
-  while (!button_is_pressed(BUTTON_B))
-    ;
+  while (!button_is_pressed(BUTTON_B));
   return 0;
 }
 
@@ -133,6 +130,7 @@ int main()
   int ut = 0;
   long dt = millis();
   long old_time = millis();
+  long running_time = millis();
 
 
   // set up the 3pi, and wait for B button to be pressed
@@ -141,31 +139,14 @@ int main()
   read_line_sensors(sensors,IR_EMITTERS_ON);
   for (i=0; i<5; i++) { minv[i] = maxv[i] = sensors[i]; }    
     
-
-  // Display calibrated sensor values as a bar graph.
-  /*
-    while (!button_is_pressed(BUTTON_B)){
-    clear();
-    print_from_program_space(tocalib);
-    lcd_goto_xy(0,1);
-    print_from_program_space(calibrateA);    
-    delay(50);
-    if(button_is_pressed(BUTTON_A))
-      calibrate_m2angle();
-    read_line_sensors(sensors,IR_EMITTERS_ON);
-    position = line_position(sensors, minv, maxv);
-    //      lcd_goto_xy(4,0);
-    //      print_long(minv[0]);
-    //display_bars(sensors, minv, maxv);
-    delay(50);
-  }
-  */
   
   dance(sensors, minv, maxv);
 
   dt = millis();
   old_time = millis();
+  running_time = millis();
   while(1) {
+    delay_ms(5);
 
     //compute delta t (time it takes for the loop to iterate once)
     dt = millis() - old_time;
@@ -186,15 +167,14 @@ int main()
 	
       set_motors(left, right);
 
-      nposition(left, right, dt, &x, &y, &theta);
+      nposition(left, right, &dt, &x, &y, &theta);
       
-      clear();
-      lcd_goto_xy(0, 0);  
-      print_long(x);
+      //      clear();
+      //      lcd_goto_xy(0, 0);  
+      //      print_long(x);
 
-      lcd_goto_xy(0, 1);
-      print_long(y);
-      
+      //      lcd_goto_xy(0, 1);
+      //      print_long(theta);
      
     }
     
@@ -202,10 +182,15 @@ int main()
 
     if(!run){
       set_motors(0, 0);
-      lcd_goto_xy(0, 1);
-      spin_by(90);
-    }
-    
+      //      clear();
+      //      print_long(millis() - running_time);
+      //      lcd_goto_xy(0, 1);
+      //      print_long(motor2speed(speed));
+      //      calibrate_m2angle();
+      //      delay(10000);
+      spin_by(theta);
+      delay(10000);
+    }    
 
   }
       
