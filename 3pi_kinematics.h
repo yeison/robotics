@@ -119,7 +119,7 @@ long motor2speed(int v) {
   // v*4.7682 - 33 mm/s
   // This is robot 493 with fully charged batteries.
   // your mileage (millimeterage) may vary
-  int r = ( (v>0)?v:-v )*237/10 + 299;
+  int r = ( (v>0)?v:-v )*238/5-330;
   r = (r>0)?r:0;
   if (v>=0) {
     return (long)(r);
@@ -140,7 +140,7 @@ long motor2angle(int ml, int mr) {
   long vr = motor2speed(mr);
   /*Yeison:  I modified the old c365 value and used 345 instead.
     this is based on manual calibration of our robot.*/
-  return (vl-vr)*365/c5152;
+  return (vl-vr)*c360/c5152;
 }
 
 

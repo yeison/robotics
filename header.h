@@ -10,7 +10,7 @@
 #include <math.h> 
 #include "calibrate.h"
 // speed of the robot 
-int speed = 50; 
+int speed = 35; 
 
 #include "robsposition.h"
  

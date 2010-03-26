@@ -41,13 +41,15 @@ int endOfLine(unsigned int *s, unsigned int *minv, unsigned int *maxv)
 void nposition(long lm, long rm, long *dt, long *x, long *y, long *theta){
 
 	
-  long new_theta = (motor2angle(lm, rm)*(*dt)) + *theta;
-  clear();
-  lcd_goto_xy(0,1);
-  print_long(new_theta);
+  long new_theta = -motor2angle(lm, rm)*(*dt) + *theta;
+
+      clear();
+      print_long(*x);
+      lcd_goto_xy(0,1);
+      print_long(*y);
 
   long avg_speed = (lm + rm)/2;
-  long avg_theta = (*theta + new_theta)/(2*1000);
+  long avg_theta = (*theta + new_theta)/2000;
   *x = *x + (motor2speed(avg_speed)*(Cos(avg_theta))*(*dt))/(1000);
   *y = *y + (motor2speed(avg_speed)*(Sin(avg_theta))*(*dt))/(1000);
   
@@ -55,37 +57,67 @@ void nposition(long lm, long rm, long *dt, long *x, long *y, long *theta){
 
 }
 
-void spin_by(long millimeters){
-  //rate of rotation (ror) in (1/10)mm/s
-  long ror = motor2angle-(speed, speed);
+void spin_by(long degrees){
+  long duration = degrees/motor2angle(-speed,speed);
+  //  clear();
+  //  lcd_goto_xy(0,0);
+  //  print_long(degrees);
+  //  lcd_goto_xy(0,1);
+  //  print_long(duration);
 
-  //Duration in milliseconds
-  long durationInMS = (millimeters*100)/(ror);
-
-  if(durationInMS < 0){
-    speed = -speed;
-    durationInMS = -durationInMS;
+  if (duration > 0) {
+    set_motors(speed,-speed);
+    delay(duration);
+  } else {
+    set_motors(-speed,speed);
+    delay(-duration);
   }
+  set_motors(0,0);
+}
 
 
-  //Maybe it should be set to (-speed, speed)
+void goBack(long *x, long *y){
   clear();
-  print_long(durationInMS);
-  lcd_goto_xy(0,1);
-  print_long(millimeters);
+  print("spinto y");
+  lcd_goto_xy(0, 1);
+  print_long(*y);
+  delay(2000);
+  if(*y > 0)
+    spin_by(-90000);
+  else
+    spin_by(90000);
+  travel(*y);
   
-  set_motors(-speed, speed);
-  delay_ms(durationInMS);
-
-  set_motors(0, 0);
-
-  delay_ms(500);
+  clear();
+  print("spinto x");
+  lcd_goto_xy(0, 1);
+  print_long(*x);
+  delay(2000);
+  if(*x > 0)
+    spin_by(90000);
+  else
+    spin_by(-90000);
+  //move  
+  travel(*x);
+  
 
 }
 
-void goBack(){
-  
+void travel(long mm_tenths){
+  long duration = (mm_tenths/motor2speed(speed));
+  if(duration < 0){
+    duration = -duration;
+  }
 
+  //print
+  clear();
+  print_long(duration);
+  lcd_goto_xy(0, 1);
+  print("duration");
+  delay(2000);
+  set_motors(speed, speed);
+  delay_ms(duration);
+  set_motors(0, 0);
 }
 
 
@@ -146,11 +178,12 @@ int main()
   old_time = millis();
   running_time = millis();
   while(1) {
-    delay_ms(5);
-
-    //compute delta t (time it takes for the loop to iterate once)
     dt = millis() - old_time;
     old_time = millis();
+    delay_ms(10);
+
+    //compute delta t (time it takes for the loop to iterate once)
+
     
     // Read the line sensor values
     read_line_sensors(sensors, IR_EMITTERS_ON);
@@ -169,12 +202,6 @@ int main()
 
       nposition(left, right, &dt, &x, &y, &theta);
       
-      //      clear();
-      //      lcd_goto_xy(0, 0);  
-      //      print_long(x);
-
-      //      lcd_goto_xy(0, 1);
-      //      print_long(theta);
      
     }
     
@@ -182,14 +209,15 @@ int main()
 
     if(!run){
       set_motors(0, 0);
-      //      clear();
-      //      print_long(millis() - running_time);
-      //      lcd_goto_xy(0, 1);
-      //      print_long(motor2speed(speed));
-      //      calibrate_m2angle();
-      //      delay(10000);
-      spin_by(theta);
-      delay(10000);
+      clear();
+      print_long(theta);
+      
+      delay_ms(3000);
+
+      spin_by(-theta);
+      goBack(&x, &y);
+
+      while (!button_is_pressed(BUTTON_B));
     }    
 
   }
